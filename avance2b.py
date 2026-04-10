@@ -1,23 +1,25 @@
 import streamlit as st
 import numpy as np
 from collections import deque
+import time
 import re
 
-# Función de resolución integrada para que el código sea funcional
+# Función de resolución con medición de tiempo
 def solve_maze_bfs(maze, start, end):
+    start_time = time.time()
     queue = deque([(start, [start])])
     visited = {start}
     while queue:
         (r, c), path = queue.popleft()
         if (r, c) == end:
-            return path, len(path)
+            return path, len(path), (time.time() - start_time)
         for dr, dc in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
             nr, nc = r + dr, c + dc
             if 0 <= nr < maze.shape[0] and 0 <= nc < maze.shape[1]:
                 if maze[nr, nc] != 1 and (nr, nc) not in visited:
                     visited.add((nr, nc))
                     queue.append(((nr, nc), path + [(nr, nc)]))
-    return None, 0
+    return None, 0, 0
 
 def render_maze(maze, start, end, path=None):
     if path is None:
@@ -45,20 +47,17 @@ def render_maze(maze, start, end, path=None):
 
 st.title("Visualizador de Algoritmo de Búsqueda")
 
-# Configuración en Sidebar
 st.sidebar.header("Carga de Datos")
 archivo = st.sidebar.file_uploader("Sube tu laberinto (.txt)", type=["txt"])
 algorithm = st.sidebar.selectbox("Algoritmo", ["BFS", "DFS", "A*"])
 solve_button = st.sidebar.button("Resolver Laberinto")
 
 if archivo:
-    # Procesamiento del archivo
     content = archivo.read().decode("utf-8")
     lines = content.strip().split('\n')
     maze_data = [[int(d) for d in re.findall(r'\d', line)] for line in lines if re.findall(r'\d', line)]
     maze_np = np.array(maze_data)
     
-    # Localización dinámica de inicio (2) y fin (3)
     p2 = np.where(maze_np == 2)
     p3 = np.where(maze_np == 3)
 
@@ -68,18 +67,18 @@ if archivo:
 
         if solve_button:
             if algorithm == "BFS":
-                path, num_casillas = solve_maze_bfs(maze_np, START, END)
+                # Ahora recibimos: ruta, número de pasos y tiempo total
+                path, num_casillas, tiempo = solve_maze_bfs(maze_np, START, END)
                 if path:
-                    st.success(f"¡Camino encontrado! Casillas totales: **{num_casillas}**")
+                    st.success(f"¡Camino encontrado! Pasos: **{num_casillas}** | Tiempo: **{tiempo:.6f}s**")
                     render_maze(maze_np, START, END, path)
                 else:
                     st.error("No se encontró una ruta posible.")
             else:
                 st.warning(f"El algoritmo {algorithm} aún no ha sido implementado.")
         else:
-            # Renderizado inicial del laberinto cargado
             render_maze(maze_np, START, END)
     else:
-        st.warning("El archivo debe contener un '2' (inicio) y un '3' (meta).")
+        st.warning("El archivo debe contener un '2' y un '3'.")
 else:
-    st.info("Por favor, sube un archivo .txt para visualizar el laberinto.")
+    st.info("Sube un archivo .txt para comenzar.")
