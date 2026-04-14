@@ -4,7 +4,7 @@ from collections import deque
 import time
 import re
 
-# Función de resolución con medición de tiempo
+# Implementación de BFS (Búsqueda en Anchura)
 def solve_maze_bfs(maze, start, end):
     start_time = time.time()
     queue = deque([(start, [start])])
@@ -19,6 +19,23 @@ def solve_maze_bfs(maze, start, end):
                 if maze[nr, nc] != 1 and (nr, nc) not in visited:
                     visited.add((nr, nc))
                     queue.append(((nr, nc), path + [(nr, nc)]))
+    return None, 0, 0
+
+# Implementación de DFS (Búsqueda en Profundidad)
+def solve_maze_dfs(maze, start, end):
+    start_time = time.time()
+    stack = [(start, [start])] # Utilizamos una pila (LIFO)
+    visited = {start}
+    while stack:
+        (r, c), path = stack.pop() # El cambio clave es .pop() en lugar de .popleft()
+        if (r, c) == end:
+            return path, len(path), (time.time() - start_time)
+        for dr, dc in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
+            nr, nc = r + dr, c + dc
+            if 0 <= nr < maze.shape[0] and 0 <= nc < maze.shape[1]:
+                if maze[nr, nc] != 1 and (nr, nc) not in visited:
+                    visited.add((nr, nc))
+                    stack.append(((nr, nc), path + [(nr, nc)]))
     return None, 0, 0
 
 def render_maze(maze, start, end, path=None):
@@ -67,18 +84,21 @@ if archivo:
 
         if solve_button:
             if algorithm == "BFS":
-                # Ahora recibimos: ruta, número de pasos y tiempo total
                 path, num_casillas, tiempo = solve_maze_bfs(maze_np, START, END)
-                if path:
-                    st.success(f"¡Camino encontrado! Pasos: **{num_casillas}** | Tiempo: **{tiempo:.6f}s**")
-                    render_maze(maze_np, START, END, path)
-                else:
-                    st.error("No se encontró una ruta posible.")
+            elif algorithm == "DFS":
+                path, num_casillas, tiempo = solve_maze_dfs(maze_np, START, END)
             else:
+                path, num_casillas, tiempo = None, 0, 0
                 st.warning(f"El algoritmo {algorithm} aún no ha sido implementado.")
+
+            if path:
+                st.success(f"¡{algorithm} completado! Pasos: **{num_casillas}** | Tiempo: **{tiempo:.6f}s**")
+                render_maze(maze_np, START, END, path)
+            elif algorithm != "A*":
+                st.error("No se encontró una ruta posible.")
         else:
             render_maze(maze_np, START, END)
     else:
-        st.warning("El archivo debe contener un '2' y un '3'.")
+        st.warning("El archivo debe contener un '2' (inicio) y un '3' (meta).")
 else:
-    st.info("Sube un archivo .txt para comenzar.")
+    st.info("Sube tu archivo .txt para visualizar el laberinto.")
