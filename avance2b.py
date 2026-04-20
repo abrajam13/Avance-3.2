@@ -108,4 +108,3 @@ if archivo:
         else: render_maze(maze_np, START, END)
     else: st.warning("Falta inicio (2) o meta (3).")
 else: st.info("Sube tu archivo .txt.")
-    st.info("Sube tu archivo .txt para visualizar el laberinto.")
